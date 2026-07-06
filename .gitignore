@@ -1,0 +1,29 @@
+# ===== Unity233 Shader Studio — .gitignore =====
+# 编辑器 / 系统垃圾
+.DS_Store
+Thumbs.db
+*.swo
+*.sln
+*.user
+.vscode/
+.idea/
+*.sublime-*
+
+# 依赖 / 构建产物（本工具为零构建静态站点，按需保留）
+node_modules/
+dist/
+build/
+.cache/
+
+# 本地运行时产物
+*.log
+npm-debug.log*
+
+# 预览导出（用户自己导出的 .shader 不入库，按需调整）
+/exports/
+
+# 第三方库我们**显式提交**到 assets/vendor 以保证离线可用，故不忽略
+
+# WorkBuddy 本地记忆：保留项目级 skills 与 MEMORY.md，不发布每日工作日志
+.workbuddy/memory/20[0-9][0-9]-[0-1][0-9]-[0-3][0-9].md
+.workbuddy/memory/MEMORY.local.md

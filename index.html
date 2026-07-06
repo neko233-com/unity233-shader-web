@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unity233 Shader Studio · Unity 2022 Shader Web 工具</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <link rel="stylesheet" href="assets/vendor/codemirror.min.css" />
+  <link rel="stylesheet" href="assets/vendor/material-darker.min.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- 左侧垂直 Tab -->
+    <aside id="sidebar">
+      <div class="brand">
+        <div class="brand-logo">U3</div>
+        <div class="brand-text">
+          <strong>Unity233</strong>
+          <span>Shader Studio</span>
+        </div>
+      </div>
+      <nav id="nav">
+        <button class="nav-item active" data-view="home" title="首页">
+          <span class="nav-ico">🏠</span><span class="nav-label">首页</span>
+        </button>
+        <button class="nav-item" data-view="workbench" title="工作台">
+          <span class="nav-ico">🧪</span><span class="nav-label">工作台</span>
+        </button>
+        <button class="nav-item" data-view="templates" title="模板中心">
+          <span class="nav-ico">📚</span><span class="nav-label">模板中心</span>
+        </button>
+        <button class="nav-item" data-view="nodes" title="节点编辑器">
+          <span class="nav-ico">🔗</span><span class="nav-label">节点编辑器</span>
+        </button>
+        <button class="nav-item" data-view="settings" title="设置">
+          <span class="nav-ico">⚙️</span><span class="nav-label">设置</span>
+        </button>
+      </nav>
+      <div class="sidebar-foot">
+        <div class="ver">Unity 2022 · WebGL</div>
+      </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main id="main">
+      <section id="view-home" class="view active"></section>
+      <section id="view-workbench" class="view"></section>
+      <section id="view-templates" class="view"></section>
+      <section id="view-nodes" class="view"></section>
+      <section id="view-settings" class="view"></section>
+    </main>
+  </div>
+
+  <!-- 提示条 -->
+  <div id="toast"></div>
+
+  <!-- 第三方库（本地） -->
+  <script src="assets/vendor/three.min.js"></script>
+  <script src="assets/vendor/codemirror.min.js"></script>
+  <script src="assets/vendor/clike.min.js"></script>
+
+  <!-- 应用脚本 -->
+  <script src="assets/js/templates.js"></script>
+  <script src="assets/js/urp_templates.js"></script>
+  <script src="assets/js/preview.js"></script>
+  <script src="assets/js/editor.js"></script>
+  <script src="assets/js/home.js"></script>
+  <script src="assets/js/templates_view.js"></script>
+  <script src="assets/js/nodeeditor.js"></script>
+  <script src="assets/js/settings.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

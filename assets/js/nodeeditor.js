@@ -60,10 +60,18 @@ const NodeEditor = (function () {
     reflect:  { group:'数学', title:'Reflect', color:'#3fd0c9', in:[{n:'I',t:'any'},{n:'N',t:'any'}], out:[{n:'Out',t:'any'}], gen:(I,port,lang)=>{const t=reqType(I);const a=cast(I[0].expr,I[0].type,t,lang);const b=cast(I[1].expr,I[1].type,t,lang);return `reflect(${a}, ${b})`;} },
     length:   { group:'数学', title:'Length', color:'#3fd0c9', in:[{n:'V',t:'any'}], out:[{n:'Out',t:'float'}], gen:(I,port,lang)=>{const t=I[0].type;return `length(${cast(I[0].expr,I[0].type,t,lang)})`;} },
     abs:      { group:'数学', title:'Abs', color:'#3fd0c9', in:[{n:'X',t:'any'}], out:[{n:'Out',t:'any'}], gen:(I,port,lang)=>{const t=I[0].type;return `abs(${cast(I[0].expr,I[0].type,t,lang)})`;} },
-    fract:    { group:'数学', title:'Fract', color:'#3fd0c9', in:[{n:'X',t:'any'}], out:[{n:'Out',t:'any'}], gen:(I,port,lang)=>{const t=I[0].type;return `fract(${cast(I[0].expr,I[0].type,t,lang)})`;} }
+    fract:    { group:'数学', title:'Fract', color:'#3fd0c9', in:[{n:'X',t:'any'}], out:[{n:'Out',t:'any'}], gen:(I,port,lang)=>{const t=I[0].type;return `fract(${cast(I[0].expr,I[0].type,t,lang)})`;} },
+    clamp:    { group:'数学', title:'Clamp', color:'#3fd0c9', in:[{n:'X',t:'any'},{n:'Min',t:'float',def:0.0},{n:'Max',t:'float',def:1.0}], out:[{n:'Out',t:'any'}], gen:(I,port,lang)=>{const t=I[0].type;const x=cast(I[0].expr,I[0].type,t,lang);const mn=cast(I[1].expr,I[1].type,t,lang);const mx=cast(I[2].expr,I[2].type,t,lang);return `clamp(${x}, ${mn}, ${mx})`;} },
+    max:      { group:'数学', title:'Max', color:'#3fd0c9', in:[{n:'A',t:'any'},{n:'B',t:'any'}], out:[{n:'Out',t:'any'}], gen:(I,port,lang)=>{const t=reqType(I);return `max(${cast(I[0].expr,I[0].type,t,lang)}, ${cast(I[1].expr,I[1].type,t,lang)})`;} },
+    min:      { group:'数学', title:'Min', color:'#3fd0c9', in:[{n:'A',t:'any'},{n:'B',t:'any'}], out:[{n:'Out',t:'any'}], gen:(I,port,lang)=>{const t=reqType(I);return `min(${cast(I[0].expr,I[0].type,t,lang)}, ${cast(I[1].expr,I[1].type,t,lang)})`;} },
+    posterize:{ group:'数学', title:'Posterize', color:'#3fd0c9', in:[{n:'X',t:'any'},{n:'阶数',t:'float',def:4.0}], out:[{n:'Out',t:'any'}], gen:(I,port,lang)=>{const t=I[0].type;const x=cast(I[0].expr,I[0].type,t,lang);const s=cast(I[1].expr,I[1].type,'float',lang);return `floor(${x} * ${s}) / ${s}`;} },
+    rotate_uv:{ group:'程序化', title:'旋转UV', color:'#ffcf5c', in:[{n:'UV',t:'vec2'},{n:'角度',t:'float',def:0.0},{n:'速度',t:'float',def:0.0}], out:[{n:'UV',t:'vec2'}], gen:(I,port,lang)=>{const uv=I[0].linked?cast(I[0].expr,I[0].type,'vec2',lang):(lang==='hlsl'?'IN.uv':'vUv');const ang=cast(I[1].expr,I[1].type,'float',lang);const sp=I[2].expr;const t=lang==='hlsl'?'_Time.y':'u_time';const a=`(${ang} + ${sp} * ${t})`;const c=`cos(${a})`,s=`sin(${a})`;const p=`(${uv} - ${ts('vec2',lang)}(0.5))`;return `(${ts('vec2',lang)}(${c} * ${p}.x - ${s} * ${p}.y, ${s} * ${p}.x + ${c} * ${p}.y) + ${ts('vec2',lang)}(0.5))`;} },
+    polar_uv: { group:'程序化', title:'极坐标UV', color:'#ffcf5c', in:[{n:'UV',t:'vec2'}], out:[{n:'角度',t:'float'},{n:'半径',t:'float'}], gen:(I,port,lang)=>{const uv=I[0].linked?cast(I[0].expr,I[0].type,'vec2',lang):(lang==='hlsl'?'IN.uv':'vUv');const p=`(${uv} - ${ts('vec2',lang)}(0.5))`;return {0:`atan(${p}.y, ${p}.x)`,1:`length(${p})`};} },
+    gradient:  { group:'程序化', title:'渐变', color:'#ffcf5c', in:[{n:'A',t:'vec3'},{n:'B',t:'vec3'},{n:'UV',t:'vec2'}], out:[{n:'RGB',t:'vec3'}], gen:(I,port,lang)=>{const a=cast(I[0].expr,I[0].type,'vec3',lang);const b=cast(I[1].expr,I[1].type,'vec3',lang);const uv=I[2].linked?cast(I[2].expr,I[2].type,'vec2',lang):(lang==='hlsl'?'IN.uv':'vUv');const tt=`clamp(0.5 * (${uv}).y + 0.5, 0.0, 1.0)`;return lang==='hlsl'?`lerp(${a}, ${b}, ${tt})`:`mix(${a}, ${b}, ${tt})`;}},
+    checker:  { group:'程序化', title:'棋盘格', color:'#ffcf5c', in:[{n:'UV',t:'vec2'},{n:'缩放',t:'float',def:8.0}], out:[{n:'Out',t:'float'}], gen:(I,port,lang)=>{const uv=I[0].linked?cast(I[0].expr,I[0].type,'vec2',lang):(lang==='hlsl'?'IN.uv':'vUv');const sc=I[1].expr;const gx=`floor((${uv}).x * ${sc})`, gy=`floor((${uv}).y * ${sc})`;const sum=`(${gx} + ${gy})`;const modf=lang==='hlsl'?`fmod(${sum}, 2.0)`:`mod(${sum}, 2.0)`;return `step(1.0, ${modf})`;} }
   };
 
-  let nodes=[], links=[], idc=1, texCount=0, panX=30, panY=20, pending=null, selected=null;
+  let nodes=[], links=[], idc=1, texCount=0, panX=30, panY=20, pending=null, selected=null, curLang='glsl';
   let wrap, canvas, svg, codeBox;
 
   function render(root){
@@ -87,7 +95,13 @@ const NodeEditor = (function () {
         <div class="ne-palette">${pal}</div>
         <div class="ne-canvas-wrap" id="ne-wrap"><div id="ne-canvas"><svg id="ne-svg"></svg></div></div>
         <div class="ne-inspector">
-          <h4>生成的 URP ShaderLab</h4>
+          <div class="ne-code-tabs">
+            <button class="ne-ctab active" data-c="glsl">GLSL 预览</button>
+            <button class="ne-ctab" data-c="hlsl">URP HLSL</button>
+            <span class="spacer"></span>
+            <button class="btn ghost" id="ne-copy">复制</button>
+            <button class="btn ghost" id="ne-fmt">格式化</button>
+          </div>
           <div class="ne-code" id="ne-code">// 连接节点后点击“编译”</div>
           <div style="margin-top:14px;display:flex;gap:8px">
             <button class="btn primary" id="ne-compile" style="flex:1">编译</button>
@@ -104,6 +118,9 @@ const NodeEditor = (function () {
     root.querySelector('#ne-demo').onclick=loadDemo;
     root.querySelector('#ne-compile').onclick=()=>compile();
     root.querySelector('#ne-send').onclick=sendToWorkbench;
+    root.querySelectorAll('.ne-ctab').forEach(b=>{ b.onclick=()=>{ curLang=b.dataset.c; root.querySelectorAll('.ne-ctab').forEach(x=>x.classList.toggle('active',x===b)); updateCodeView(); }; });
+    root.querySelector('#ne-copy').onclick=()=>{ const txt=curLang==='hlsl'?(codeBox.dataset.shaderLab||''):(codeBox.dataset.preview||''); if(!txt.trim()){toast('还没有代码','err');return;} if(navigator.clipboard) navigator.clipboard.writeText(txt).then(()=>toast('已复制 '+curLang.toUpperCase(),'ok'),()=>toast('复制失败','err')); else toast('当前环境不支持复制','err'); };
+    root.querySelector('#ne-fmt').onclick=()=>{ const key=curLang==='hlsl'?'shaderLab':'preview'; const cur=codeBox.dataset[key]||''; if(!cur.trim()){toast('还没有代码','err');return;} const f=window.ShaderFormatter?ShaderFormatter.beautify(cur):cur; codeBox.dataset[key]=f; updateCodeView(); toast('已格式化','ok'); };
     applyPan();
     if(nodes.length===0) loadDemo(); else redraw();
   }
@@ -192,6 +209,8 @@ const NodeEditor = (function () {
     if(typeof out==='object'){ n._c[lang]=out; return out[port]; }
     n._c[lang][port]=out; return out;
   }
+
+  function updateCodeView(){ if(!codeBox) return; codeBox.textContent = curLang==='hlsl' ? (codeBox.dataset.shaderLab||'') : (codeBox.dataset.preview||''); }
 
   // ---- 编译 ----
   function compile(){
@@ -310,10 +329,12 @@ ${clipLine}                InputData id = (InputData)0;
   gl_FragColor = vec4(col, 1.0);
 }`;
 
-    codeBox.textContent = shaderLab;
-    codeBox.dataset.shaderLab = shaderLab;
-    codeBox.dataset.preview = previewFrag;
-    return { shaderLab, previewFrag };
+    const fmtSL = window.ShaderFormatter ? ShaderFormatter.beautify(shaderLab) : shaderLab;
+    const fmtGL = window.ShaderFormatter ? ShaderFormatter.beautify(previewFrag) : previewFrag;
+    codeBox.dataset.shaderLab = fmtSL;
+    codeBox.dataset.preview = fmtGL;
+    updateCodeView();
+    return { shaderLab: fmtSL, previewFrag: fmtGL };
   }
 
   function sendToWorkbench(){

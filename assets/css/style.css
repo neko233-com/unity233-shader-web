@@ -205,3 +205,41 @@ select{background:var(--panel-2);color:var(--txt);border:1px solid var(--line);b
 ::-webkit-scrollbar{width:10px;height:10px}
 ::-webkit-scrollbar-thumb{background:#3a3b40;border-radius:6px}
 ::-webkit-scrollbar-thumb:hover{background:#4a4b50}
+
+/* ===== 转译器 ===== */
+.tr-toolbar{display:flex;align-items:center;gap:8px;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+.tr-toolbar .spacer{flex:1}
+.tr-body{display:flex;gap:0;height:calc(100% - 56px);overflow:hidden}
+.tr-body.single #tr-in-col{display:none}
+.tr-col{flex:1;display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line)}
+.tr-col:last-child{border-right:none}
+.tr-col h4{padding:10px 16px;margin:0;font-size:13px;color:var(--txt-dim);border-bottom:1px solid var(--line);background:var(--bg-2)}
+.tr-col textarea{flex:1;width:100%;border:none;outline:none;resize:none;background:var(--panel);color:var(--txt);font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace;font-size:12.5px;line-height:1.65;padding:14px 16px}
+.tr-col textarea[readonly]{background:var(--bg-2)}
+#tr-warn{padding:0 18px}
+
+/* ===== 节点编辑器代码切换 ===== */
+.ne-code-tabs{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+.ne-code-tabs .spacer{flex:1}
+.ne-ctab{background:var(--panel);border:1px solid var(--line);color:var(--txt-dim);padding:5px 12px;border-radius:8px;cursor:pointer;font-size:12px}
+.ne-ctab.active{color:#fff;border-color:var(--accent);background:rgba(74,155,255,.14)}
+
+/* ===== 模板收藏星标 ===== */
+.tpl-badges{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.fav-btn{background:transparent;border:1px solid var(--line);color:var(--warn);border-radius:8px;cursor:pointer;font-size:15px;line-height:1;padding:2px 9px}
+.fav-btn:hover{border-color:var(--warn)}
+
+/* ===== 我的 ===== */
+.my-head{padding:18px 22px;border-bottom:1px solid var(--line)}
+.my-head h2{margin:0 0 4px;font-size:20px}
+.my-cols{display:flex;gap:0;height:calc(100% - 64px)}
+.my-col{flex:1;min-width:0;display:flex;flex-direction:column;padding:16px 20px;overflow:auto;border-right:1px solid var(--line)}
+.my-col:last-child{border-right:none}
+.my-col h3{margin:0 0 12px;font-size:14px;display:flex;align-items:center;gap:8px;font-weight:600}
+.my-count{color:var(--txt-dim);font-size:12px}
+.my-list{display:flex;flex-direction:column;gap:10px}
+.my-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.my-meta{min-width:0}
+.my-meta b{font-size:13px}
+.my-actions{display:flex;gap:6px;flex-shrink:0}
+.my-empty{color:var(--txt-dim);font-size:13px;line-height:1.7;padding:8px 2px}

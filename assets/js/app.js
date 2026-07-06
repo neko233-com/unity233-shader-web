@@ -11,8 +11,10 @@ const App = (function () {
   const renderers = {
     home: (r) => Home.render(r),
     templates: (r) => TemplatesView.render(r),
+    translator: (r) => ShaderTranslator.render(r),
     settings: (r) => Settings.render(r),
-    nodes: (r) => NodeEditor.render(r)
+    nodes: (r) => NodeEditor.render(r),
+    my: (r) => MyView.render(r)
   };
   const rendered = {};
 
@@ -24,6 +26,7 @@ const App = (function () {
 
     if (!rendered[view] && renderers[view]) { renderers[view](sec); rendered[view] = true; }
 
+    if (view === 'my') MyView.render(sec); // 每次进入都从本地存储刷新
     if (view === 'workbench') Workbench.onShow();
     window.scrollTo(0, 0);
   }

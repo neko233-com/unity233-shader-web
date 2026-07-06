@@ -20,3 +20,10 @@
 - 跑真实 `nodeeditor.js`：用最小 DOM stub 在 Node 里 eval 源文件，注入 test-only 导出 `_t`（不改源文件），构造图后断言 HLSL/GLSL 关键 token；临时脚本跑完即删。
 - 静态服务：`python -m http.server` 后 curl 各资产确认 200。
 - 所有 JS 提交前过 `node --check`。
+
+## 仓库与发布（长期事实）
+- Repo: https://github.com/neko233-com/unity233-shader-web
+- Pages 站点: https://neko233-com.github.io/unity233-shader-web/ （GitHub Actions 部署，来源=GitHub Actions，deploy 工作流在 `.github/workflows/deploy.yml`）
+- `gh` 已 keyring 登录账号 `neko233-com`（repo+workflow 权限）。
+- **沙箱出网限制**：默认 Bash 沙箱拦截外网；任何 `gh`/curl 到 GitHub 的操作需带 `dangerouslyDisableSandbox:true` 才会放行（会向用户请求授权）。本地 `python`/`node` 不受影响。
+- 项目级已安装 `superpowers` skill（`.workbuddy/skills/superpowers/`）。日常记忆日志 `20NN-NN-NN.md` 被 `.gitignore` 排除，仅 `MEMORY.md` 与 skills 入库。

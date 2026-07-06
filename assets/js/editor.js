@@ -25,6 +25,7 @@ const Workbench = (function () {
           <button class="btn ghost" id="wb-reset">重置默认</button>
           <button class="btn ghost" id="wb-save">保存</button>
           <button class="btn ghost" id="wb-copy">复制</button>
+          <button class="btn ghost" id="wb-fmt">格式化</button>
           <button class="btn ghost" id="wb-export" style="display:none">⬇ 导出 .shader</button>
           <span class="spacer"></span>
           <span class="tag" id="wb-stat">就绪</span>
@@ -124,6 +125,11 @@ const Workbench = (function () {
       toast('已保存到本地', 'ok');
     };
     document.getElementById('wb-copy').onclick = copyShader;
+    document.getElementById('wb-fmt').onclick = () => {
+      const cur = cm.getValue();
+      const f = window.ShaderFormatter ? window.ShaderFormatter.beautify(cur) : cur;
+      cm.setValue(f); run(); toast('已格式化', 'ok');
+    };
     document.getElementById('wb-export').onclick = exportShader;
 
     const speed = document.getElementById('p-speed');
@@ -230,6 +236,7 @@ const Workbench = (function () {
     a.download = name;
     document.body.appendChild(a); a.click();
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 100);
+    window.Store.addHist({ name: name, kind: 'URP 工作台', code: state.shaderLab });
     toast('已导出 ' + name, 'ok');
   }
 

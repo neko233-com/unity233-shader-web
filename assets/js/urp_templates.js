@@ -739,6 +739,383 @@ void main(){
   float f = pow(1.0 - max(dot(normalize(vNormal), normalize(vViewDir)), 0.0), 3.0);
   gl_FragColor = vec4(lerp(u_colorA, u_colorB, f), 1.0);
 }`
+    },
+
+    {
+      id: 'urp-rimlight', name: 'RimLight 边缘光', category: '光照', desc: 'URP PBR + 菲涅尔边缘光自发光的边缘光材质。',
+      shaderLab: `Shader "Unity233/URP/RimLight"
+{
+    Properties
+    {
+        _BaseColor("Base Color", Color) = (0.8,0.8,0.9,1)
+        _RimColor("Rim Color", Color) = (0.4,0.9,1,1)
+        _RimPower("Rim Power", Float) = 3.0
+        _RimIntensity("Rim Intensity", Float) = 1.0
+    }
+    SubShader
+    {
+        Tags { "RenderType"="Opaque" "RenderPipeline"="UniversalPipeline" }
+        Pass
+        {
+            Name "ForwardLit"
+            Tags { "LightMode"="UniversalForward" }
+            HLSLPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            CBUFFER_START(UnityPerMaterial)
+                float4 _BaseColor;
+                float4 _RimColor;
+                float  _RimPower;
+                float  _RimIntensity;
+            CBUFFER_END
+            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; };
+            struct Varyings  { float4 positionHCS : SV_POSITION; float2 uv : TEXCOORD0; float3 normalWS : TEXCOORD1; float3 positionWS : TEXCOORD2; };
+            Varyings vert(Attributes IN)
+            {
+                Varyings OUT;
+                OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
+                OUT.uv = IN.uv;
+                OUT.normalWS = TransformObjectToWorldNormal(IN.normalOS);
+                OUT.positionWS = TransformObjectToWorld(IN.positionOS.xyz);
+                return OUT;
+            }
+            half4 frag(Varyings IN) : SV_Target
+            {
+                float3 N = normalize(IN.normalWS);
+                float3 V = GetWorldSpaceNormalizeViewDir(IN.positionWS);
+                float rim = pow(1.0 - max(dot(N, V), 0.0), _RimPower) * _RimIntensity;
+                InputData id = (InputData)0;
+                id.normalWS = N;
+                id.positionWS = IN.positionWS;
+                id.viewDirectionWS = V;
+                id.shadowCoord = TransformWorldToShadowCoord(IN.positionWS);
+                id.bakedGI = SampleSH(N);
+                SurfaceData sd = (SurfaceData)0;
+                sd.albedo = _BaseColor.rgb;
+                sd.emission = _RimColor.rgb * rim;
+                sd.alpha = 1.0;
+                return UniversalFragmentPBR(id, sd);
+            }
+            ENDHLSL
+        }
+    }
+}`,
+      previewFrag: `void main(){
+  float rim = pow(1.0 - max(dot(normalize(vNormal), normalize(vViewDir)), 0.0), 3.0);
+  vec3 base = u_colorA * (0.3 + 0.7 * max(dot(normalize(vNormal), normalize(u_lightDir)), 0.0)) * u_lightColor;
+  vec3 col = base + u_colorB * rim;
+  gl_FragColor = vec4(col, 1.0);
+}`
+    },
+
+    {
+      id: 'urp-matcap', name: 'Matcap', category: '光照', desc: 'URP Matcap：用视空间法线采样 Matcap 贴图（预览用渐变近似）。',
+      shaderLab: `Shader "Unity233/URP/Matcap"
+{
+    Properties
+    {
+        _Matcap("Matcap", 2D) = "white" {}
+        _Tint("Tint", Color) = (1,1,1,1)
+    }
+    SubShader
+    {
+        Tags { "RenderType"="Opaque" "RenderPipeline"="UniversalPipeline" }
+        Pass
+        {
+            Name "ForwardLit"
+            Tags { "LightMode"="UniversalForward" }
+            HLSLPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            TEXTURE2D(_Matcap); SAMPLER(sampler_Matcap);
+            CBUFFER_START(UnityPerMaterial)
+                float4 _Matcap_ST;
+                float4 _Tint;
+            CBUFFER_END
+            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float3 tangentOS : TANGENT; float2 uv : TEXCOORD0; };
+            struct Varyings  { float4 positionHCS : SV_POSITION; float2 uv : TEXCOORD0; float3 normalWS : TEXCOORD1; float3 viewNormal : TEXCOORD2; };
+            Varyings vert(Attributes IN)
+            {
+                Varyings OUT;
+                OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
+                OUT.uv = IN.uv;
+                float3 nW = TransformObjectToWorldNormal(IN.normalOS);
+                OUT.normalWS = nW;
+                OUT.viewNormal = mul((float3x3)UNITY_MATRIX_V, nW).xyz;
+                return OUT;
+            }
+            half4 frag(Varyings IN) : SV_Target
+            {
+                float2 muv = IN.viewNormal.xy * 0.5 + 0.5;
+                float3 mc = SAMPLE_TEXTURE2D(_Matcap, sampler_Matcap, muv).rgb;
+                return half4(mc * _Tint.rgb, 1);
+            }
+            ENDHLSL
+        }
+    }
+}`,
+      previewFrag: `void main(){
+  vec2 muv = normalize(vNormal).xy * 0.5 + 0.5;
+  vec3 mc = mix(u_colorB, u_colorA, muv.y);
+  gl_FragColor = vec4(mc, 1.0);
+}`
+    },
+
+    {
+      id: 'urp-emissive', name: 'Emissive 脉冲自发光', category: '特效', desc: 'URP PBR + 随时间脉冲的自发光（赛博/能量感）。',
+      shaderLab: `Shader "Unity233/URP/Emissive"
+{
+    Properties
+    {
+        _BaseColor("Base Color", Color) = (0.2,0.2,0.25,1)
+        _EmissionColor("Emission", Color) = (1,0.4,0.1,1)
+        _PulseSpeed("Pulse Speed", Float) = 2.0
+        _PulsePower("Pulse Power", Float) = 2.0
+    }
+    SubShader
+    {
+        Tags { "RenderType"="Opaque" "RenderPipeline"="UniversalPipeline" }
+        Pass
+        {
+            Name "ForwardLit"
+            Tags { "LightMode"="UniversalForward" }
+            HLSLPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            CBUFFER_START(UnityPerMaterial)
+                float4 _BaseColor;
+                float4 _EmissionColor;
+                float  _PulseSpeed;
+                float  _PulsePower;
+            CBUFFER_END
+            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; };
+            struct Varyings  { float4 positionHCS : SV_POSITION; float2 uv : TEXCOORD0; float3 normalWS : TEXCOORD1; float3 positionWS : TEXCOORD2; };
+            Varyings vert(Attributes IN)
+            {
+                Varyings OUT;
+                OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
+                OUT.uv = IN.uv;
+                OUT.normalWS = TransformObjectToWorldNormal(IN.normalOS);
+                OUT.positionWS = TransformObjectToWorld(IN.positionOS.xyz);
+                return OUT;
+            }
+            half4 frag(Varyings IN) : SV_Target
+            {
+                float3 N = normalize(IN.normalWS);
+                float pulse = pow(0.5 + 0.5 * sin(_Time.y * _PulseSpeed), _PulsePower);
+                InputData id = (InputData)0;
+                id.normalWS = N;
+                id.positionWS = IN.positionWS;
+                id.viewDirectionWS = GetWorldSpaceNormalizeViewDir(IN.positionWS);
+                id.shadowCoord = TransformWorldToShadowCoord(IN.positionWS);
+                id.bakedGI = SampleSH(N);
+                SurfaceData sd = (SurfaceData)0;
+                sd.albedo = _BaseColor.rgb;
+                sd.emission = _EmissionColor.rgb * pulse;
+                sd.alpha = 1.0;
+                return UniversalFragmentPBR(id, sd);
+            }
+            ENDHLSL
+        }
+    }
+}`,
+      previewFrag: `void main(){
+  float pulse = pow(0.5 + 0.5 * sin(u_time * u_speed * 2.0), 2.0);
+  vec3 col = u_colorA * 0.3 + u_colorB * pulse;
+  gl_FragColor = vec4(col, 1.0);
+}`
+    },
+
+    {
+      id: 'urp-ice', name: 'Ice 冰', category: '特效', desc: 'URP 半透明冰：高光滑 + 菲涅尔控制透明度与边缘辉光。',
+      shaderLab: `Shader "Unity233/URP/Ice"
+{
+    Properties
+    {
+        _BaseColor("Base Color", Color) = (0.7,0.85,1,1)
+        _FresnelColor("Fresnel", Color) = (0.8,0.95,1,1)
+        _FresnelPower("Fresnel Power", Float) = 4.0
+    }
+    SubShader
+    {
+        Tags { "RenderType"="Transparent" "RenderPipeline"="UniversalPipeline" "Queue"="Transparent" }
+        Pass
+        {
+            Name "ForwardLit"
+            Tags { "LightMode"="UniversalForward" }
+            Blend SrcAlpha OneMinusSrcAlpha
+            ZWrite Off
+            HLSLPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            CBUFFER_START(UnityPerMaterial)
+                float4 _BaseColor;
+                float4 _FresnelColor;
+                float  _FresnelPower;
+            CBUFFER_END
+            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; };
+            struct Varyings  { float4 positionHCS : SV_POSITION; float2 uv : TEXCOORD0; float3 normalWS : TEXCOORD1; float3 positionWS : TEXCOORD2; };
+            Varyings vert(Attributes IN)
+            {
+                Varyings OUT;
+                OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
+                OUT.uv = IN.uv;
+                OUT.normalWS = TransformObjectToWorldNormal(IN.normalOS);
+                OUT.positionWS = TransformObjectToWorld(IN.positionOS.xyz);
+                return OUT;
+            }
+            half4 frag(Varyings IN) : SV_Target
+            {
+                float3 N = normalize(IN.normalWS);
+                float3 V = GetWorldSpaceNormalizeViewDir(IN.positionWS);
+                float f = pow(1.0 - max(dot(N, V), 0.0), _FresnelPower);
+                InputData id = (InputData)0;
+                id.normalWS = N;
+                id.positionWS = IN.positionWS;
+                id.viewDirectionWS = V;
+                id.bakedGI = SampleSH(N);
+                SurfaceData sd = (SurfaceData)0;
+                sd.albedo = _BaseColor.rgb;
+                sd.smoothness = 0.9;
+                sd.emission = _FresnelColor.rgb * f * 0.5;
+                sd.alpha = clamp(0.4 + f, 0.0, 1.0);
+                return UniversalFragmentPBR(id, sd);
+            }
+            ENDHLSL
+        }
+    }
+}`,
+      previewFrag: `void main(){
+  float f = pow(1.0 - max(dot(normalize(vNormal), normalize(vViewDir)), 0.0), 4.0);
+  vec3 col = mix(u_colorA, u_colorB, f);
+  gl_FragColor = vec4(col, 0.5 + 0.5 * f);
+}`
+    },
+
+    {
+      id: 'urp-cartoon', name: 'Cartoon 卡通分层', category: '光照', desc: 'URP 卡通分层着色：量化漫反射 + 阶梯高光（不依赖贴图）。',
+      shaderLab: `Shader "Unity233/URP/Cartoon"
+{
+    Properties
+    {
+        _BaseColor("Base Color", Color) = (0.9,0.7,0.7,1)
+        _Steps("Cel Steps", Float) = 4.0
+        _SpecColor("Specular", Color) = (1,1,1,1)
+    }
+    SubShader
+    {
+        Tags { "RenderType"="Opaque" "RenderPipeline"="UniversalPipeline" }
+        Pass
+        {
+            Name "ForwardLit"
+            Tags { "LightMode"="UniversalForward" }
+            HLSLPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            CBUFFER_START(UnityPerMaterial)
+                float4 _BaseColor;
+                float  _Steps;
+                float4 _SpecColor;
+            CBUFFER_END
+            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; };
+            struct Varyings  { float4 positionHCS : SV_POSITION; float2 uv : TEXCOORD0; float3 normalWS : TEXCOORD1; float3 positionWS : TEXCOORD2; };
+            Varyings vert(Attributes IN)
+            {
+                Varyings OUT;
+                OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
+                OUT.uv = IN.uv;
+                OUT.normalWS = TransformObjectToWorldNormal(IN.normalOS);
+                OUT.positionWS = TransformObjectToWorld(IN.positionOS.xyz);
+                return OUT;
+            }
+            half4 frag(Varyings IN) : SV_Target
+            {
+                float3 N = normalize(IN.normalWS);
+                float3 V = GetWorldSpaceNormalizeViewDir(IN.positionWS);
+                Light main = GetMainLight();
+                float ndl = max(dot(N, main.direction), 0.0);
+                float cel = floor(ndl * _Steps) / _Steps;
+                float3 H = normalize(main.direction + V);
+                float spec = step(0.5, pow(max(dot(N, H), 0.0), 32.0));
+                float3 col = _BaseColor.rgb * (0.3 + 0.7 * cel) * main.color + _SpecColor.rgb * spec;
+                return half4(col, 1);
+            }
+            ENDHLSL
+        }
+    }
+}`,
+      previewFrag: `void main(){
+  float ndl = max(dot(normalize(vNormal), normalize(u_lightDir)), 0.0);
+  float cel = floor(ndl * 4.0) / 4.0;
+  vec3 col = u_colorA * (0.3 + 0.7 * cel) * u_lightColor;
+  gl_FragColor = vec4(col, 1.0);
+}`
+    },
+
+    {
+      id: 'urp-xray', name: 'XRay 透视', category: '特效', desc: 'URP 加色透视：菲涅尔 + 脉冲，适合扫描/能量护盾。',
+      shaderLab: `Shader "Unity233/URP/XRay"
+{
+    Properties
+    {
+        _Color("Color", Color) = (0.1,0.8,1,1)
+        _Power("Power", Float) = 2.0
+        _Speed("Speed", Float) = 1.0
+    }
+    SubShader
+    {
+        Tags { "RenderType"="Transparent" "RenderPipeline"="UniversalPipeline" "Queue"="Transparent" }
+        Pass
+        {
+            Name "XRay"
+            Tags { "LightMode"="UniversalForward" }
+            Blend One One
+            ZWrite Off
+            HLSLPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            CBUFFER_START(UnityPerMaterial)
+                float4 _Color;
+                float  _Power;
+                float  _Speed;
+            CBUFFER_END
+            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; };
+            struct Varyings  { float4 positionHCS : SV_POSITION; float3 normalWS : TEXCOORD1; float3 positionWS : TEXCOORD2; };
+            Varyings vert(Attributes IN)
+            {
+                Varyings OUT;
+                OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
+                OUT.normalWS = TransformObjectToWorldNormal(IN.normalOS);
+                OUT.positionWS = TransformObjectToWorld(IN.positionOS.xyz);
+                return OUT;
+            }
+            half4 frag(Varyings IN) : SV_Target
+            {
+                float3 N = normalize(IN.normalWS);
+                float3 V = GetWorldSpaceNormalizeViewDir(IN.positionWS);
+                float f = pow(1.0 - max(dot(N, V), 0.0), _Power);
+                float pulse = 0.7 + 0.3 * sin(_Time.y * _Speed);
+                return half4(_Color.rgb * f * pulse, 1);
+            }
+            ENDHLSL
+        }
+    }
+}`,
+      previewFrag: `void main(){
+  float f = pow(1.0 - max(dot(normalize(vNormal), normalize(vViewDir)), 0.0), 2.0);
+  float pulse = 0.7 + 0.3 * sin(u_time * u_speed);
+  gl_FragColor = vec4(u_colorA * f * pulse, 1.0);
+}`
     }
   ];
 

@@ -38,20 +38,23 @@ const TemplatesView = (function () {
       const card = document.createElement('div');
       card.className = 'tpl-card';
       const badge = t.kind === 'urp' ? '<span class="tcat" style="background:rgba(124,92,255,.16);color:#b9a6ff">URP · 可导出</span>' : '<span class="tcat">GLSL 片段</span>';
+      const star = window.Store.isFav(t.id) ? '★' : '☆';
       const expBtn = t.kind === 'urp' ? `<button class="btn ghost" data-exp style="margin-top:10px;padding:5px 10px;font-size:12px">⬇ 导出 .shader</button>` : '';
       card.innerHTML = `
         <div class="tpl-thumb"><canvas width="320" height="180"></canvas></div>
         <div class="tpl-body">
           <h3>${t.name}</h3>
           <p>${t.desc}</p>
-          ${badge}
+          <div class="tpl-badges">${badge}<button class="fav-btn" data-fav title="收藏">${star}</button></div>
           <div>${expBtn}</div>
         </div>`;
       card.querySelector('.tpl-thumb').onclick = () => openTpl(t);
       card.querySelector('h3').onclick = () => openTpl(t);
       card.querySelector('p').onclick = () => openTpl(t);
       const eb = card.querySelector('[data-exp]');
-      if (eb) eb.onclick = (e) => { e.stopPropagation(); download(t.id, t.shaderLab); toast('已导出 ' + t.id + '.shader', 'ok'); };
+      if (eb) eb.onclick = (e) => { e.stopPropagation(); download(t.id, t.shaderLab); window.Store.addHist({ name: t.id + '.shader', kind: 'URP 模板', code: t.shaderLab }); toast('已导出 ' + t.id + '.shader', 'ok'); };
+      const fb = card.querySelector('[data-fav]');
+      if (fb) fb.onclick = (e) => { e.stopPropagation(); const now = window.Store.toggleFav({ id: t.id, name: t.name, kind: t.kind, desc: t.desc }); e.currentTarget.textContent = now ? '★' : '☆'; toast(now ? '已收藏' : '已取消收藏', 'ok'); };
       grid.appendChild(card);
       const cv = card.querySelector('canvas');
       const frag = t.kind === 'urp' ? (window.UrpTemplates.PREVIEW_LIB + t.previewFrag) : t.frag;
